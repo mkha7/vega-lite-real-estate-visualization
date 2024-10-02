@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Property Transactions & House Price Index in Malaysia</title>
+    <script src="https://cdn.jsdelivr.net/npm/vega@5.20.2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-lite@5.2.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-embed@6.17.0"></script>
+</head>
+<body>
+    <h1>Property Transactions & House Price Index in Malaysia</h1>
+
+    <!-- Container for the first visualization (Map) -->
+    <div id="map"></div>
+
+    <!-- Container for the second visualization (Bar chart) -->
+    <div id="barchart"></div>
+
+    <script type="text/javascript">
+        // JSON spec for the map visualization
+        const mapSpec = {
+          "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+          "vconcat": [
+            {
+              "width": 800,
+              "height": 450,
+              "title": "Property Transactions in Malaysia - Interactive Filtering",
+              "projection": {
+                "type": "mercator",
+                "scale": 2400,
+                "center": [108, 3],
+                "translate": [400, 225]
+              },
+              "layer": [
+                {
+                  "data": {
+                    "url": "https://raw.githubusercontent.com/mkha7/vega-lite-real-estate-visualization/refs/heads/main/ne_110m%20(2).json",
+                    "format": { "type": "topojson", "feature": "ne_110m_admin_0_countries" }
+                  },
+                  "mark": { "type": "geoshape", "fill": "lightgray", "stroke": "white" }
+                },
+                {
+                  "data": {
+                    "values": [
+                      {
+                        "State": "Selangor",
+                        "longitude": 101.5183,
+                        "latitude": 3.0738,
+                        "Transactions": 55035,
+                        "Value": 30.26
+                      },
+                      {
+                        "State": "Johor",
+                        "longitude": 103.7414,
+                        "latitude": 1.4927,
+                        "Transactions": 40561,
+                        "Value": 18.12
+                      },
+                      {
+                        "State": "Kuala Lumpur",
+                        "longitude": 101.6869,
+                        "latitude": 3.139,
+                        "Transactions": 5927,
+                        "Value": 3.63
+                      },
+                      {
+                        "State": "Penang",
+                        "longitude": 100.3327,
+                        "latitude": 5.4164,
+                        "Transactions": 8000,
+                        "Value": 4.02
+                      }
+                    ]
+                  },
+                  "transform": [
+                    {"filter": "datum.State == State_selection || State_selection == null"}
+                  ],
+                  "mark": { "type": "circle", "tooltip": { "content": "data" } },
+                  "encoding": {
+                    "longitude": { "field": "longitude", "type": "quantitative" },
+                    "latitude": { "field": "latitude", "type": "quantitative" },
+                    "size": {
+                      "field": "Transactions",
+                      "type": "quantitative",
+                      "title": "Number of Transactions",
+                      "scale": { "domain": [5000, 60000], "range": [100, 1000] }
+                    },
+                    "color": {
+                      "field": "Value",
+                      "type": "quantitative",
+                      "title": "Value of Transactions in Billion",
+                      "scale": { "scheme": "blues" }
+                    },
+                    "tooltip": [
+                      { "field": "State", "type": "nominal", "title": "State" },
+                      { "field": "Transactions", "type": "quantitative", "title": "Number of Transactions" },
+                      { "field": "Value", "type": "quantitative", "title": "Transaction Value (Billion RM)" }
+                    ]
+                  }
+                }
+              ]
+            }
+          ],
+          "params": [
+            {
+              "name": "State_selection",
+              "bind": {
+                "input": "select",
+                "options": [null, "Selangor", "Johor", "Kuala Lumpur", "Penang"],
+                "labels": ["Show All", "Selangor", "Johor", "Kuala Lumpur", "Penang"],
+                "name": "Filter by State: "
+              }
+            }
+          ]
+        };
+
+        // JSON spec for the bar chart visualization
+        const barChartSpec = {
+          "width": 800,
+          "height": 400,
+          "title": "House Price Index by State (2023)",
+          "data": {
+            "url": "https://raw.githubusercontent.com/mkha7/vega-lite-real-estate-visualization/refs/heads/main/House%20Price%20Index%20-%20Malaysia%20-%20Sheet1.csv"
+          },
+          "transform": [
+            {"filter": "datum.State == State_selection || State_selection == null"}
+          ],
+          "layer": [
+            {
+              "mark": { "type": "bar", "tooltip": true },
+              "encoding": {
+                "x": { "field": "State", "type": "nominal", "title": "State", "axis": { "labelAngle": -45 } },
+                "y": { "field": "House Price Index (HPI)", "type": "quantitative", "title": "House Price Index (HPI)" },
+                "color": {
+                  "field": "% Change (YoY)",
+                  "type": "quantitative",
+                  "title": "% Change Year-on-Year",
+                  "scale": { "scheme": "blues" }
+                },
+                "tooltip": [
+                  { "field": "State", "type": "nominal", "title": "State" },
+                  { "field": "House Price Index (HPI)", "type": "quantitative", "title": "House Price Index" },
+                  { "field": "% Change (YoY)", "type": "quantitative", "title": "YoY % Change" }
+                ]
+              }
+            },
+            {
+              "mark": {
+                "type": "text",
+                "align": "center",
+                "dx": 0,
+                "dy": -5,
+                "fontSize": 12,
+                "fontStyle": "italic"
+              },
+              "encoding": {
+                "x": { "field": "State", "type": "nominal" },
+                "y": { "field": "House Price Index (HPI)", "type": "quantitative" },
+                "text": { "field": "House Price Index (HPI)", "type": "quantitative" }
+              }
+            }
+          ]
+        };
+
+        // Embed the visualizations
+        vegaEmbed('#map', mapSpec);
+        vegaEmbed('#barchart', barChartSpec);
+    </script>
+</body>
+</html>
